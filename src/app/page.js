@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -34,15 +34,31 @@ export default function Home() {
     );
   };
   const router = useRouter();
+  const [searches , setSearches] = useState([]);
+  
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const res = await fetch('/api/collections');
+        const data = await res.json();
+        setSearches(data.collections || []);
+      } catch (err) {
+        console.error('Failed to load collections:', err);
+      }
+    };
+
+    fetchCollections();
+  }, []);
+
 
   const handleSubmit = async () => {
     if (!hashtag || selectedPlatforms.length === 0) {
       alert("Please enter a hashtag and select at least one platform.");
       return;
     }
-  
+
     setStatus("loading");
-  
+
     const fetchPromises = selectedPlatforms.map((platform) => {
       switch (platform) {
         case "youtube":
@@ -61,7 +77,7 @@ export default function Home() {
               if (!res.ok) throw new Error(data.error || "YouTube fetch failed");
               console.log("YouTube Data:", data);
             });
-  
+
         case "twitter":
           return fetch("/api/x", {
             method: "POST",
@@ -75,12 +91,12 @@ export default function Home() {
               if (!res.ok) throw new Error(data.error || "Twitter fetch failed");
               console.log("Twitter Data:", data);
             });
-  
+
         default:
           return Promise.resolve(); // ignore unsupported platforms
       }
     });
-  
+
     try {
       await Promise.all(fetchPromises);
       setStatus("done");
@@ -90,7 +106,7 @@ export default function Home() {
       setStatus("");
     }
   };
-  
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white px-6 py-4">
@@ -158,8 +174,8 @@ export default function Home() {
               key={platform.id}
               onClick={() => togglePlatform(platform.id)}
               className={`cursor-pointer transition-all rounded-xl shadow-md border-2 text-center flex flex-col items-center justify-center gap-2 py-6 hover:scale-[1.02] ${isSelected
-                  ? "border-blue-500 bg-blue-900"
-                  : "border-gray-700 bg-gray-800 hover:bg-gray-700"}`}
+                ? "border-blue-500 bg-blue-900"
+                : "border-gray-700 bg-gray-800 hover:bg-gray-700"}`}
             >
               <Image
                 src={platform.logo}
@@ -168,19 +184,32 @@ export default function Home() {
                 height={24}
                 className="rounded-sm" />
             </Card>
-              </>
+            </>
           );
         })}
       </div>
       <div className="flex flex-col items-center mt-6 gap-2">
-  <button
-    className="text-lg border-md p-4 text-white font-semibold border border-white rounded-lg hover:bg-white hover:text-black transition disabled:opacity-50"
-    onClick={handleSubmit}
-    disabled={status === "loading"}
-  >
-    {status === "loading" ? "Loading..." : status === "done" ? "Completed" : "Submit"}
-  </button>
-</div>
-</div>
+        <button
+          className="text-lg border-md p-4 text-white font-semibold border border-white rounded-lg hover:bg-white hover:text-black transition disabled:opacity-50"
+          onClick={handleSubmit}
+          disabled={status === "loading"}
+        >
+          {status === "loading" ? "Loading..." : status === "done" ? "Completed" : "Submit"}
+        </button>
+
+      </div>
+      <br/>
+      <div className="py-4 text-lg font-semibold">
+        Recent Searches :
+        <ul className="list-disc list-inside">
+        {searches.length > 0 ? (
+          searches.map((name, idx) => <li key={idx}>{name}</li>)
+        ) : (
+          <li>Loading collections...</li>
+        )}
+      </ul>
+      </div>
+
+    </div>
   );
 }
