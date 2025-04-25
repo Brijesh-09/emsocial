@@ -34,8 +34,8 @@ export default function Home() {
     );
   };
   const router = useRouter();
-  const [searches , setSearches] = useState([]);
-  
+  const [searches, setSearches] = useState([]);
+
   useEffect(() => {
     const fetchCollections = async () => {
       try {
@@ -198,16 +198,24 @@ export default function Home() {
         </button>
 
       </div>
-      <br/>
+      <br />
       <div className="py-4 text-lg font-semibold">
         Recent Searches :
         <ul className="list-disc list-inside">
-        {searches.length > 0 ? (
-          searches.map((name, idx) => <li key={idx}>{name}</li>)
-        ) : (
-          <li>Loading collections...</li>
-        )}
-      </ul>
+          {searches.length > 0 ? (
+            searches.map((name, idx) => (
+              <li
+                key={idx}
+                className="cursor-pointer text-blue-400 hover:underline"
+                onClick={() => router.push(`/${name}`)}
+              >
+                {name}
+              </li>
+            ))
+          ) : (
+            <li>Loading collections...</li>
+          )}
+        </ul>
       </div>
 
     </div>

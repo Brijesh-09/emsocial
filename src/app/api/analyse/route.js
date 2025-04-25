@@ -19,8 +19,24 @@ export async function POST(req) {
   }
 
   // build a single string payload (truncate if too long!)
-  const prompt = `Analyze the following ${platform} data for "${query}". Return structured JSON with sentimentDistribution, topEngagers, contentThemes:\n\n` +
-    docs.map(d => JSON.stringify(d)).join('\n');
+  const prompt = `
+Analyze the following ${platform} data for "${query}" and return a compact JSON with:
+
+- sentimentDistribution (positive, neutral, negative summaries)
+- topEngagers (top 3 with reason)
+- contentThemes (main topics with examples)
+- keywordFrequency (top 10 keywords and counts)
+- wordCountStats (average words, max words, min words)
+- topPositiveWords (top 5 words)
+- topNegativeWords (top 5 words)
+
+No extra text. Only valid JSON.
+
+Data:
+\n\n
+${docs.map(d => JSON.stringify(d)).join('\n')}
+`;
+
 
   // ▶ Correct Gemini REST call
   const geminiRes = await axios.post(
