@@ -1,43 +1,32 @@
 import mongoose from 'mongoose';
 
-// Tweet schema with query indexing and compound unique index
-export const TweetSchema = new mongoose.Schema({
-  id:           { type: String, required: true, unique: true },
-  text:         String,
-  tweetUrl:     String,
-  createdAt:    Date,
-  authorId:     String,
-  retweetCount: Number,
-  replyCount:   Number,
-  likeCount:    Number,
-  quoteCount:   Number,
-  // AI analysis placeholder
-  analysis:     { type: mongoose.Schema.Types.Mixed, default: {} },
-}, { timestamps: true });
+// Unified schema for social posts without platform type
+export const SocialPostSchema = new mongoose.Schema({
+  keyword:      { type: String, required: true },   // E.g., "elonmusk", "startup2024"
 
-// Base Video schema (raw + analysis)
-export const VideoSchema = new mongoose.Schema({
-  id:           { type: String, required: true, unique: true },
-  title:        String,
-  description:  String,
-  thumbnail:    String,
-  channelTitle: String,
-  publishedAt:  Date,
-  videoUrl:     String,
-  viewCount:    Number,
+  postId:       { type: String, required: true },   // ID from Twitter or Instagram
+  text:         String,                             // Tweet text or Instagram caption
+  mediaUrl:     String,                             // Thumbnail, image, or video URL
+  postUrl:      String,                             // URL to the post
+  authorId:     String,                             // Poster ID
+  authorName:   String,                             // Poster name
+  createdAt:    Date,                               // When the post was originally created
+
+  // Engagement
   likeCount:    Number,
   commentCount: Number,
-  dislikeCount: Number,
-  // AI analysis placeholder
+  shareCount:   Number, // Retweet, reshare, etc.
+  viewCount:    Number, // optional, if available
+
+  // AI analysis (optional)
   analysis:     { type: mongoose.Schema.Types.Mixed, default: {} },
 }, { timestamps: true });
 
-// Helper to get/create a model bound to a collection named after the query
-export function getModelForQuery({ schema, query, prefix }) {
-  const name = `${prefix}_${query.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`;
+// Get model based on keyword (collection name = cleaned keyword)
+export function getModelForKeyword(keyword) {
+  const name = keyword.toLowerCase().replace(/[^a-z0-9]+/g, '_');
   if (mongoose.models[name]) {
     return mongoose.models[name];
   }
-  // Use same string for collection name
-  return mongoose.model(name, schema, name);
+  return mongoose.model(name, SocialPostSchema, name);
 }
