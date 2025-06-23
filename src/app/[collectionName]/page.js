@@ -3,34 +3,16 @@ import { connectToDB } from '@/app/lib/mongodb';
 import { notFound } from 'next/navigation';
 import AnalyseButton from '@/components/AnalyseButton';
 
-const YOUTUBE_FIELDS = [
-  'id',
-  '__v',
-  'channelTitle',
+const FIELDS_TO_SHOW = [
+  'postId',
   'commentCount',
   'createdAt',
-  'description',
   'likeCount',
-  'publishedAt',
-  'thumbnail',
-  'title',
-  'updatedAt',
-  'videoUrl',
-  'viewCount',
-];
-
-const TWITTER_FIELDS = [
-  'id',
-  '__v',
-  'authorId',
-  'createdAt',
-  'likeCount',
-  'quoteCount',
-  'replyCount',
-  'retweetCount',
+  'mediaUrl',
+  'postUrl',
+  'shareCount',
   'text',
-  'tweetUrl',
-  'updatedAt',
+  'viewCount',
 ];
 
 export default async function CollectionPage({ params }) {
@@ -43,7 +25,7 @@ export default async function CollectionPage({ params }) {
   let docs;
   try {
     docs = await db.collection(collectionName).find().toArray();
-  } catch {
+  } catch (err) {
     return notFound();
   }
 
@@ -56,9 +38,7 @@ export default async function CollectionPage({ params }) {
     );
   }
 
-  const isYouTube = collectionName.startsWith('videos');
-  const FIELDS_TO_SHOW = isYouTube ? YOUTUBE_FIELDS : TWITTER_FIELDS;
-  const analysis = docs[0].analysis;
+  const analysis = docs[0]?.analysis || null;
 
   return (
     <div className="p-6 bg-gray-950 text-white min-h-screen">
@@ -95,16 +75,40 @@ export default async function CollectionPage({ params }) {
                     );
                   }
 
-                  if ((col === 'videoUrl' || col === 'tweetUrl') && typeof value === 'string') {
+                  if (col === 'mediaUrl' && typeof value === 'string') {
+                    const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(value);
+                    const isVideo = /\.(mp4|webm|ogg)$/i.test(value);
+
                     return (
                       <td key={col} className="px-4 py-2">
+                        {isImage ? (
+                          <img src={value} alt="media" className="w-24 h-auto rounded" />
+                        ) : isVideo ? (
+                          <video src={value} controls className="w-32 h-auto rounded" />
+                        ) : (
+                          <a
+                            href={value}
+                            className="text-blue-400 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            View Media
+                          </a>
+                        )}
+                      </td>
+                    );
+                  }
+
+                  if (col === 'postUrl' && typeof value === 'string') {
+                    return (
+                      <td key={col} className="px-4 py-2 max-w-xs break-words">
                         <a
                           href={value}
                           className="text-blue-400 underline"
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          Open Link
+                          {value.length > 50 ? value.slice(0, 50) + '...' : value}
                         </a>
                       </td>
                     );
@@ -165,14 +169,15 @@ export default async function CollectionPage({ params }) {
                 </li>
               ))}
             </ul>
-
           </div>
 
           <div>
             <h3 className="font-semibold text-lg">🔍 Keyword Frequency</h3>
             <ul className="grid grid-cols-2 gap-2 text-sm">
               {Object.entries(analysis.keywordFrequency || {}).map(([kw, val]) => (
-                <li key={kw}><strong>{kw}</strong>: {val?.$numberInt}</li>
+                <li key={kw}>
+                  <strong>{kw}</strong>: {val?.$numberInt ?? val}
+                </li>
               ))}
             </ul>
           </div>
@@ -180,9 +185,9 @@ export default async function CollectionPage({ params }) {
           <div>
             <h3 className="font-semibold text-lg">📐 Word Count Statistics</h3>
             <ul className="list-disc list-inside text-sm">
-              <li>Average Words: {analysis.wordCountStats?.averageWords?.$numberDouble}</li>
-              <li>Max Words: {analysis.wordCountStats?.maxWords?.$numberInt}</li>
-              <li>Min Words: {analysis.wordCountStats?.minWords?.$numberInt}</li>
+              <li>Average Words: {analysis.wordCountStats?.averageWords?.$numberDouble ?? analysis.wordCountStats?.averageWords}</li>
+              <li>Max Words: {analysis.wordCountStats?.maxWords?.$numberInt ?? analysis.wordCountStats?.maxWords}</li>
+              <li>Min Words: {analysis.wordCountStats?.minWords?.$numberInt ?? analysis.wordCountStats?.minWords}</li>
             </ul>
           </div>
 

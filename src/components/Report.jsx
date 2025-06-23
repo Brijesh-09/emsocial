@@ -65,20 +65,38 @@ export default function Report({ analysis }) {
 
       {/* Content Themes */}
       <section className="bg-gray-900 p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4 text-sky-400">Content Themes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {contentThemes && Object.entries(contentThemes).map(([theme, items]) => (
-            <div key={theme} className="p-4 bg-gray-800 rounded-lg">
-              <div className="text-lg font-bold capitalize mb-2">{theme.replace(/([A-Z])/g, ' $1')}</div>
-              <ul className="list-disc list-inside space-y-1 text-gray-400 text-sm">
-                {items.map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
+  <h2 className="text-2xl font-semibold mb-4 text-sky-400">Content Themes</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {contentThemes &&
+      Object.entries(contentThemes).map(([theme, items]) => {
+        let normalizedItems = [];
+
+        if (Array.isArray(items)) {
+          normalizedItems = items;
+        } else if (typeof items === 'object' && items !== null) {
+          normalizedItems = Object.entries(items).map(([key, val]) => `${key}: ${val}`);
+        } else if (typeof items === 'string') {
+          normalizedItems = [items];
+        } else {
+          normalizedItems = [String(items)];
+        }
+
+        return (
+          <div key={theme} className="p-4 bg-gray-800 rounded-lg">
+            <div className="text-lg font-bold capitalize mb-2">
+              {theme.replace(/([A-Z])/g, ' $1')}
             </div>
-          ))}
-        </div>
-      </section>
+            <ul className="list-disc list-inside space-y-1 text-gray-400 text-sm">
+              {normalizedItems.map((item, idx) => (
+                <li key={idx}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+  </div>
+</section>
+
     </div>
   );
 }
